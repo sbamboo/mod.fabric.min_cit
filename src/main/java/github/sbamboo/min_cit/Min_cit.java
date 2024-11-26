@@ -4,6 +4,9 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.Person;
 import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceType;
 import net.minecraft.resource.ResourceManager;
@@ -16,6 +19,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Min_cit implements ModInitializer {
 	public static final String MOD_ID = "min_cit";
@@ -31,57 +35,22 @@ public class Min_cit implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Hello Fabric world!");
+		// Get the mod container for this mod ID
+		ModContainer modContainer = FabricLoader.getInstance().getModContainer(MOD_ID).orElse(null);
+
+		// Retrieve the version from the mod metadata or set to "unknown"
+		String version = (modContainer != null) ? modContainer.getMetadata().getVersion().getFriendlyString() : "unknown";
+
+		// Retrieve authors and join them with "&"
+		String authors = (modContainer != null) ? modContainer.getMetadata().getAuthors().stream()
+				.map(Person::getName)
+				.collect(Collectors.joining("&")) : "unknown";
+		authors = capitalizeFirstLetter(authors);
+
+		LOGGER.info(authors + "'s MinCIT " + version + " loaded!");
 
 		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
-			new SimpleSynchronousResourceReloadListener() {
-				@Override
-				public Identifier getFabricId() {
-					return Identifier.ofVanilla("optifine/cit");
-				}
-
-				@Override
-				public void reload(ResourceManager manager) {
-					LOGGER.info( manager.getAllNamespaces().toString() );
-
-					// https://optifine.readthedocs.io/cit.html
-
-					for(Map.Entry<Identifier, Resource> entry : manager.findResources("optifine/cit", path -> path.toString().endsWith(".properties")).entrySet() ) {
-						try(InputStream stream = entry.getValue().getInputStream()) {
-							// Consume
-							Properties properties = new Properties();
-							properties.load(stream);
-
-							// Handle matchItems
-							String matchItems = "";
-							if (!properties.containsKey("matchItems")) {
-								matchItems = properties.getProperty("items");
-								properties.remove("items");
-							} else {
-								matchItems = properties.getProperty("matchItems");
-							}
-							String[] parts = matchItems.split(" ");
-							for (int i = 0; i < parts.length; i++) {
-								if (!parts[i].contains(":")) {
-									parts[i] = "minecraft:" + parts[i];  // Add prefix if no colon
-								}
-							}
-							properties.setProperty("matchItems",String.join(" ", parts));
-
-							// Handle nbt.display.Name
-							String display_name = properties.getProperty("nbt.display.Name");
-							properties.remove("nbt.display.Name");
-							properties.setProperty("display_name_pattern", Min_cit.resolveIpattern(display_name) );
-
-							LOGGER.info(String.valueOf(properties));
-
-							stream.close();
-						} catch (Exception e) {
-							LOGGER.error("Error occurred while loading cit properties" + entry.getKey().toString(), e);
-						}
-					}
-				}
-			}
+			new CitResourceLoader()
 		);
 	}
 
@@ -112,5 +81,13 @@ public class Min_cit implements ModInitializer {
 			// ipattern:<regex>: Treat it as a raw regex pattern
 			return patternContent;
 		}
+	}
+
+	// Method to capitalize the first letter of a string
+	private String capitalizeFirstLetter(String str) {
+		if (str == null || str.isEmpty()) {
+			return str;
+		}
+		return Character.toUpperCase(str.charAt(0)) + str.substring(1);
 	}
 }
