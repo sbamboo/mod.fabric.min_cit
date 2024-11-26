@@ -18,12 +18,19 @@
 		"main": [
 			"github.sbamboo.min_cit.Min_cit"
 		],
+		"client": [
+			"github.sbamboo.min_cit.Min_citClient"
+		],
 		"fabric-datagen": [
 			"github.sbamboo.min_cit.Min_citDataGenerator"
 		]
 	},
 	"mixins": [
-		"min_cit.mixins.json"
+		"min_cit.mixins.json",
+		{
+			"config": "min_cit.client.mixins.json",
+			"environment": "client"
+		}
 	],
 	"depends": {
 		"fabricloader": ">=0.16.9",
