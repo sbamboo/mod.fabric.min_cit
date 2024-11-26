@@ -1,0 +1,44 @@
+{
+	"schemaVersion": 1,
+	"id": "min_cit",
+	"version": "${version}",
+	"name": "min_cit",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/min_cit/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"github.sbamboo.min_cit.Min_cit"
+		],
+		"client": [
+			"github.sbamboo.min_cit.Min_citClient"
+		],
+		"fabric-datagen": [
+			"github.sbamboo.min_cit.Min_citDataGenerator"
+		]
+	},
+	"mixins": [
+		"min_cit.mixins.json",
+		{
+			"config": "min_cit.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.9",
+		"minecraft": "~1.21.3",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
