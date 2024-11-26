@@ -3,19 +3,14 @@ package github.sbamboo.min_cit;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.Person;
-import net.minecraft.resource.Resource;
 import net.minecraft.resource.ResourceType;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import org.apache.commons.logging.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -28,6 +23,8 @@ public class Min_cit implements ModInitializer {
 	// It is considered best practice to use your mod id as the logger's name.
 	// That way, it's clear which mod wrote info, warnings, and errors.
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+	public static Map<String, Properties> LoadedProperties = new HashMap<>();
 
 	@Override
 	public void onInitialize() {
@@ -50,7 +47,7 @@ public class Min_cit implements ModInitializer {
 		LOGGER.info(authors + "'s MinCIT " + version + " loaded!");
 
 		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(
-			new CitResourceLoader()
+			new CitAsyncResourceLoader()
 		);
 	}
 
@@ -89,5 +86,35 @@ public class Min_cit implements ModInitializer {
 			return str;
 		}
 		return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+	}
+
+
+	public static void addLoadedProperty(String key, Properties properties) {
+		LoadedProperties.put(key, properties);
+	}
+
+	public static void removeLoadedProperty(String key) {
+		LoadedProperties.remove(key);
+	}
+
+	public static boolean hasLoadedProperty(String key) {
+		return LoadedProperties.containsKey(key);
+	}
+
+	public static void clearLoadedProperties() {
+		LoadedProperties.clear();
+	}
+
+	public static void debugLoadedProperties(Logger ActiveLogger) {
+		for (Map.Entry<String, Properties> entry : LoadedProperties.entrySet()) {
+			String stringKey = entry.getKey();
+			Properties properties = entry.getValue();
+
+			ActiveLogger.info(stringKey + ":");
+			for (String propertyKey : properties.stringPropertyNames()) {
+				String propertyValue = properties.getProperty(propertyKey);
+				ActiveLogger.info("    " + propertyKey + ": " + propertyValue);
+			}
+		}
 	}
 }

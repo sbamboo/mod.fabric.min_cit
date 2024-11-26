@@ -6,8 +6,11 @@ import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
 
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class CitResourceLoader implements SimpleSynchronousResourceReloadListener {
     @Override
@@ -30,8 +33,10 @@ public class CitResourceLoader implements SimpleSynchronousResourceReloadListene
                 // Handle matchItems
                 String matchItems = "";
                 if (!properties.containsKey("matchItems")) {
-                    matchItems = properties.getProperty("items");
-                    properties.remove("items");
+                    if (properties.containsKey("items")) {
+                        matchItems = properties.getProperty("items");
+                        properties.remove("items");
+                    }
                 } else {
                     matchItems = properties.getProperty("matchItems");
                 }
@@ -44,17 +49,50 @@ public class CitResourceLoader implements SimpleSynchronousResourceReloadListene
                 properties.setProperty("matchItems",String.join(" ", parts));
 
                 // Handle nbt.display.Name
-                String display_name = properties.getProperty("nbt.display.Name");
-                properties.remove("nbt.display.Name");
+                String display_name = "";
+                if (properties.containsKey("nbt.display.Name")) {
+                    display_name = properties.getProperty("nbt.display.Name");
+                    properties.remove("nbt.display.Name");
+                }
                 properties.setProperty("display_name_pattern", Min_cit.resolveIpattern(display_name) );
 
-                Min_cit.LOGGER.info(String.valueOf(properties));
+                // Handle texture
+                //// Temporary map to hold the extracted texture properties
+                Map<String, String> textureMap = new HashMap<>();
+                if (properties.containsKey("texture")) {
+                    textureMap.put("layer0",properties.getProperty("texture"));
+                    properties.remove("texture");
+                }
+
+                //// Collect keys starting with "texture."
+                List<String> textureKeys = properties.stringPropertyNames().stream()
+                        .filter(key -> key.startsWith("texture."))
+                        .toList();
+
+                //// Process each key
+                textureKeys.forEach(key -> {
+                    String newKey = key.substring("texture.".length());
+                    textureMap.put(newKey, properties.getProperty(key));
+                    properties.remove(key); // Remove the key from Properties
+                });
+
+                //// Add the map as a serialized string under "textures" key
+                String texturesSerialized = textureMap.entrySet().stream()
+                        .map(toSerializeEntry -> toSerializeEntry.getKey() + "=" + toSerializeEntry.getValue())
+                        .collect(Collectors.joining(","));
+                properties.setProperty("textures", texturesSerialized);
+
+                // Add to main class
+                Min_cit.addLoadedProperty( entry.getKey().toString(), properties );
 
                 stream.close();
             } catch (Exception e) {
                 Min_cit.LOGGER.error("Error occurred while loading cit properties" + entry.getKey().toString(), e);
             }
         }
+
+        // After load
+        Min_cit.LOGGER.info("Applied CIT resources");
     }
 }
 
