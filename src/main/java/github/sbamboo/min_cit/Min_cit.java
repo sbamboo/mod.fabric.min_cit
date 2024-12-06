@@ -117,4 +117,28 @@ public class Min_cit implements ModInitializer {
 			}
 		}
 	}
+
+	public static String getFileName(String input) {
+		String filePath;
+
+		// Step 1: Check for ":"
+		if (input.contains(":")) {
+			// Step 2: Split by ":"
+			filePath = input.split(":")[1];
+		} else {
+			filePath = input;
+		}
+
+		// Step 3: Extract filename without extension
+		// Find the last "/" if any, to isolate the filename
+		String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+
+		// Remove the extension if present
+		int dotIndex = fileName.lastIndexOf('.');
+		if (dotIndex > 0) { // Ensure there is a dot and it's not the first character
+			fileName = fileName.substring(0, dotIndex);
+		}
+
+		return fileName;
+	}
 }

@@ -49,11 +49,18 @@ public class CitAsyncResourceLoader implements IdentifiableResourceReloadListene
                     }
                     String[] parts = matchItems.split(" ");
                     for (int i = 0; i < parts.length; i++) {
-                        if (!parts[i].contains(":")) {
-                            parts[i] = "minecraft:" + parts[i];  // Add prefix if no colon
+                        // If non-empty string, add minecraft: namespace if no namespace is supplied
+                        if (!parts[i].replaceAll("\\s", "").isEmpty()) {
+                            if (!parts[i].contains(":")) {
+                                parts[i] = "minecraft:" + parts[i];  // Add prefix if no colon
+                            }
                         }
                     }
                     properties.setProperty("matchItems",String.join(" ", parts));
+
+                    if (properties.getProperty("matchItems").replaceAll("\\s", "").isEmpty()) {
+                        properties.setProperty("matchItems", "minecraft:" + Min_cit.getFileName(entry.getKey().toString()));
+                    }
 
                     // Handle nbt.display.Name
                     String display_name = "";
@@ -107,6 +114,7 @@ public class CitAsyncResourceLoader implements IdentifiableResourceReloadListene
         // Apply stage - process the properties files
         return applyStage.thenRunAsync(() -> {
             Min_cit.LOGGER.info("Applying CIT resources");
+            Min_cit.debugLoadedProperties(Min_cit.LOGGER);
         }, applyExecutor);
     }
 }
